@@ -229,6 +229,8 @@ namespace EVEMon.CharacterMonitoring
                 SecurityStatusLabel.Text = $"Security Status: {m_character.SecurityStatus:N2}";
                 ActiveShipLabel.Text = m_character.GetActiveShipText();
                 LocationInfoLabel.Text = $"Located in: {m_character.GetLastKnownLocationText()}";
+                ToolTip.SetToolTip(LocationInfoLabel, "Home station: " + m_character.
+                    HomeStation?.FullLocation ?? EveMonConstants.UnknownText);
 
                 string dockedInfoText = m_character.GetLastKnownDockedText();
                 DockedInfoLabel.Text = string.IsNullOrWhiteSpace(dockedInfoText) ? " " :
@@ -248,11 +250,16 @@ namespace EVEMon.CharacterMonitoring
             m_updatingLabels = true;
             try
             {
+                string lbl = m_character.Label;
                 // Update the character labels
                 CustomLabelComboBox.Items.Clear();
                 foreach (string label in allLabels)
                     CustomLabelComboBox.Items.Add(label);
-                CustomLabelComboBox.Text = m_character.Label;
+                CustomLabelComboBox.Text = lbl;
+                // Provide clickable text if the label is blank
+                if (lbl.IsEmptyOrUnknown())
+                    lbl = "Edit label";
+                CustomLabelLink.Text = lbl;
             }
             finally
             {
@@ -268,7 +275,7 @@ namespace EVEMon.CharacterMonitoring
             if (m_character == null)
                 return;
 
-            CCPCharacter ccpCharacter = m_character as CCPCharacter;
+            var ccpCharacter = m_character as CCPCharacter;
             if (ccpCharacter == null)
             {
                 AccountStatusTableLayoutPanel.Visible = false;
@@ -693,7 +700,7 @@ namespace EVEMon.CharacterMonitoring
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void EveMonClient_ConquerableStationListUpdated(object sender, EventArgs e)
         {
-
+            UpdateInfoControls();
         }
 
         /// <summary>
@@ -948,7 +955,17 @@ namespace EVEMon.CharacterMonitoring
             }
         }
 
+        /// <summary>
+        /// Occurs when the user edits the character's custom label.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="LinkLabelLinkClickedEventArgs"/> instance containing the event data.</param>
+        private void CustomLabelLink_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            CustomLabelLink.Visible = false;
+            CustomLabelComboBox.Visible = true;
+        }
+
         #endregion
-        
     }
 }
